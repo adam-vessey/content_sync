@@ -72,7 +72,7 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
         $source      = str_replace("$scheme://", $source_path, $data['uri'][0]['value']);
         if (file_exists($source)) {
           $file = $data['uri'][0]['value'];
-          if (!file_exists($file) || (md5_file($file) !== md5_file($source))) {
+          if (!file_exists($file) || !$this->compareFiles($file, $source)) {
             $dir = $this->fileSystem->dirname($data['uri'][0]['value']);
             file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
             $uri = file_unmanaged_copy($source, $data['uri'][0]['value']);
@@ -132,6 +132,21 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
     }
 
     return $data;
+  }
+
+  /**
+   * Compare the contents of two files.
+   *
+   * @param string $alpha
+   *   The filename of the first file to compare.
+   * @param string $bravo
+   *   The filename of the second file to compare.
+   *
+   * @return boolean
+   *   TRUE if the contents appear to be identical; otherwise, FALSE.
+   */
+  protected function compareFiles($alpha, $bravo) {
+    return md5_file($alpha) === md5_file($bravo);
   }
 
 }
