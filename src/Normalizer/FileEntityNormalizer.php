@@ -134,6 +134,7 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
     return $data;
   }
 
+  const COMPARE_READLEN = 4096;
   /**
    * Compare the contents of two files.
    *
@@ -144,9 +145,40 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
    *
    * @return boolean
    *   TRUE if the contents appear to be identical; otherwise, FALSE.
+   *
+   * @see https://www.php.net/manual/en/function.md5-file.php#94494
    */
   protected function compareFiles($alpha, $bravo) {
-    return md5_file($alpha) === md5_file($bravo);
+    if (filesize($alpha) !== filesize($bravo)) {
+      // Different filesizes, obviously different content.
+      return FALSE;
+    }
+
+    if(!$fp1 = fopen($alpha, 'rb')) {
+      return FALSE;
+    }
+
+    if(!$fp2 = fopen($bravo, 'rb')) {
+      fclose($fp1);
+      return FALSE;
+    }
+
+    $same = TRUE;
+    while (!feof($fp1) and !feof($fp2)) {
+      if(fread($fp1, static::COMPARE_READLEN) !== fread($fp2, static::COMPARE_READLEN)) {
+        $same = FALSE;
+        break;
+      }
+    }
+
+    if(feof($fp1) !== feof($fp2)) {
+      $same = FALSE;
+    }
+
+    fclose($fp1);
+    fclose($fp2);
+
+    return $same;
   }
 
 }
