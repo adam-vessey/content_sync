@@ -106,20 +106,6 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
       }
     }
 
-    // If the image was sent as URL we must to create the physical file.
-    /*if ($file_data) {
-      // Decode and save to file.
-      $file_contents = base64_decode($file_data);
-      $dirname = $this->fileSystem->dirname($entity->getFileUri());
-      file_prepare_directory($dirname, FILE_CREATE_DIRECTORY);
-      if ($uri = file_unmanaged_save_data($file_contents, $entity->getFileUri())) {
-        $entity->setFileUri($uri);
-      }
-      else {
-        throw new \RuntimeException(SafeMarkup::format('Failed to write @filename.', array('@filename' => $entity->getFilename())));
-      }
-    }*/
-
     return $entity;
   }
 
