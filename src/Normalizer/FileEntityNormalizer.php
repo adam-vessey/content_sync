@@ -55,12 +55,23 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
 
     // If a directory is set, we must to copy the file to the file system.
     if (!empty($serializer_context['content_sync_directory_files'])) {
+      $file_path = realpath($serializer_context['content_sync_directory_files']);
+      if ($file_path === FALSE && file_exists($serializer_context['content_sync_directory_files'])) {
+        // XXX: 'realpath' returned FALSE; however, the path appears to exist.
+        // It's likely a URI making use of a stream wrapper for which
+        // calculating a "realpath" does not make sense... ideally there would
+        // be some other canonicalization which might be used to deal with
+        // relative path components; however, let's just pass it along as-is
+        // for now.
+        $file_path = $serializer_context['content_sync_directory_files'];
+      }
+
       $scheme = $this->fileSystem->uriScheme($data['uri'][0]['value']);
       if (!empty($scheme)) {
-        $source_path = realpath($serializer_context['content_sync_directory_files']) . '/' .$scheme . '/';
-        $source      = str_replace($scheme . '://', $source_path, $data['uri'][0]['value']);
+        $source_path = "$file_path/$scheme/";
+        $source      = str_replace("$scheme://", $source_path, $data['uri'][0]['value']);
         if (file_exists($source)) {
-          $file = $this->fileSystem->realpath($data['uri'][0]['value']);
+          $file = $data['uri'][0]['value'];
           if (!file_exists($file) || (md5_file($file) !== md5_file($source))) {
             $dir = $this->fileSystem->dirname($data['uri'][0]['value']);
             file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
@@ -68,7 +79,7 @@ class FileEntityNormalizer extends ContentEntityNormalizer {
             $data['uri'] = [
               [
                 'value' => $uri,
-                'url' => str_replace($GLOBALS['base_url'], '', file_create_url($uri))
+                'url' => file_url_transform_relative(file_create_url($uri))
               ]
             ];
 
